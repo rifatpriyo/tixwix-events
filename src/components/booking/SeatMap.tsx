@@ -159,7 +159,7 @@ export const SeatMap = ({ showtime, movie, onBack }: SeatMapProps) => {
           total_amount: totalAmount,
           final_amount: totalAmount,
           status: "confirmed",
-          payment_status: "completed",
+          payment_status: "paid",
           payment_method: "demo",
         })
         .select()
