@@ -1,16 +1,39 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { MapPin, Calendar, Film, Users, Search } from "lucide-react";
-import { movies } from "@/data/mockData";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+
+interface Movie {
+  id: string;
+  title: string;
+  status: string | null;
+}
 
 export const QuickBookingForm = () => {
   const navigate = useNavigate();
   const [selectedMovie, setSelectedMovie] = useState("");
+  const [movies, setMovies] = useState<Movie[]>([]);
+
+  useEffect(() => {
+    const fetchMovies = async () => {
+      const { data, error } = await supabase
+        .from("movies")
+        .select("id, title, status")
+        .eq("status", "now_showing")
+        .order("title");
+
+      if (!error && data) {
+        setMovies(data);
+      }
+    };
+
+    fetchMovies();
+  }, []);
   
   const handleBookNow = () => {
-    if (selectedMovie) {
+    if (selectedMovie && selectedMovie !== "all") {
       navigate(`/movies/${selectedMovie}`);
     } else {
       navigate("/movies");
@@ -69,7 +92,7 @@ export const QuickBookingForm = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Movies</SelectItem>
-                {movies.filter(m => m.status === "now_showing").map((movie) => (
+                {movies.map((movie) => (
                   <SelectItem key={movie.id} value={movie.id}>
                     {movie.title}
                   </SelectItem>
