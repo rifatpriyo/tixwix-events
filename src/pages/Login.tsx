@@ -1,17 +1,32 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Film, Mail, Lock, User, Loader2 } from "lucide-react";
+import { Film, Mail, Lock, User, Loader2, Shield } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
 
 const emailSchema = z.string().email("Please enter a valid email address");
 const passwordSchema = z.string().min(6, "Password must be at least 6 characters");
+
+// Check if user is admin
+const checkIsAdmin = async (userId: string): Promise<boolean> => {
+  try {
+    const { data, error } = await supabase.rpc('has_role', {
+      _user_id: userId,
+      _role: 'admin'
+    });
+    if (error) return false;
+    return data === true;
+  } catch {
+    return false;
+  }
+};
 
 const Login = () => {
   const navigate = useNavigate();
@@ -26,9 +41,17 @@ const Login = () => {
   const [signupConfirmPassword, setSignupConfirmPassword] = useState("");
 
   useEffect(() => {
-    if (user && !authLoading) {
-      navigate("/");
-    }
+    const redirectUser = async () => {
+      if (user && !authLoading) {
+        const isAdmin = await checkIsAdmin(user.id);
+        if (isAdmin) {
+          navigate("/admin");
+        } else {
+          navigate("/");
+        }
+      }
+    };
+    redirectUser();
   }, [user, authLoading, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -57,8 +80,18 @@ const Login = () => {
         toast.error(error.message);
       }
     } else {
-      toast.success("Welcome back!");
-      navigate("/");
+      // Check if admin and redirect accordingly
+      const { data: { user: loggedInUser } } = await supabase.auth.getUser();
+      if (loggedInUser) {
+        const isAdmin = await checkIsAdmin(loggedInUser.id);
+        if (isAdmin) {
+          toast.success("Welcome Admin!");
+          navigate("/admin");
+        } else {
+          toast.success("Welcome back!");
+          navigate("/");
+        }
+      }
     }
   };
 
