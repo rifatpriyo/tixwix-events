@@ -4,10 +4,12 @@ import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar, MapPin, Clock, Users, ArrowLeft, Loader2, Ticket } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Calendar, MapPin, Clock, Users, ArrowLeft, Loader2, Ticket, Tag, Gift, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { useAuth } from "@/hooks/useAuth";
+import { useBookingDiscounts } from "@/hooks/useBookingDiscounts";
 import { toast } from "sonner";
 
 interface Concert {
@@ -44,6 +46,27 @@ const ConcertDetail = () => {
   const [selectedSection, setSelectedSection] = useState<ConcertSection | null>(null);
   const [ticketCount, setTicketCount] = useState(1);
   const [isBooking, setIsBooking] = useState(false);
+
+  const totalAmount = selectedSection ? selectedSection.price * ticketCount : 0;
+
+  // Use discounts hook
+  const {
+    promoCode,
+    setPromoCode,
+    appliedPromo,
+    applyPromoCode,
+    removePromoCode,
+    isApplyingPromo,
+    loyaltyInfo,
+    calculateFinalAmount,
+  } = useBookingDiscounts({
+    userId: user?.id,
+    ticketCount,
+    totalAmount,
+    bookingType: "concert",
+  });
+
+  const discounts = calculateFinalAmount();
 
   useEffect(() => {
     const fetchConcertAndSections = async () => {
@@ -105,7 +128,7 @@ const ConcertDetail = () => {
     setIsBooking(true);
 
     try {
-      const totalAmount = selectedSection.price * ticketCount;
+      const { subtotal, promoDiscount, loyaltyDiscount, finalAmount } = discounts;
       
       // Create booking
       const { data: booking, error: bookingError } = await supabase
@@ -115,8 +138,10 @@ const ConcertDetail = () => {
           concert_id: concert.id,
           concert_section_id: selectedSection.id,
           booking_type: "concert",
-          total_amount: totalAmount,
-          final_amount: totalAmount,
+          total_amount: subtotal,
+          discount_amount: promoDiscount + loyaltyDiscount,
+          final_amount: finalAmount,
+          promo_code: appliedPromo?.code || null,
           status: "confirmed",
           payment_status: "paid",
           payment_method: "demo",
@@ -144,6 +169,14 @@ const ConcertDetail = () => {
         .from("concert_sections")
         .update({ available_tickets: selectedSection.available_tickets - ticketCount })
         .eq("id", selectedSection.id);
+
+      // Update promo code usage count if used
+      if (appliedPromo) {
+        await supabase
+          .from("promo_codes")
+          .update({ used_count: (appliedPromo as any).used_count + 1 })
+          .eq("id", appliedPromo.id);
+      }
 
       toast.success("Tickets booked successfully!");
       navigate(`/booking/${booking.id}`);
@@ -294,6 +327,24 @@ const ConcertDetail = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                  {/* Loyalty Status */}
+                  {user && (
+                    <div className="p-3 rounded-lg bg-primary/10 border border-primary/20">
+                      <div className="flex items-center gap-2 text-sm">
+                        <Gift className="w-4 h-4 text-primary" />
+                        <span>
+                          {loyaltyInfo.isEligibleForFreeTickets ? (
+                            <span className="text-primary font-semibold">🎉 You get 2 FREE tickets on this booking!</span>
+                          ) : (
+                            <span className="text-muted-foreground">
+                              {4 - loyaltyInfo.completedBookings} more booking{4 - loyaltyInfo.completedBookings !== 1 ? "s" : ""} until 2 free tickets
+                            </span>
+                          )}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
                   {selectedSection ? (
                     <>
                       <div className="flex justify-between">
@@ -326,10 +377,63 @@ const ConcertDetail = () => {
                         <span className="text-muted-foreground">Price per ticket</span>
                         <span>৳{selectedSection.price}</span>
                       </div>
+
+                      {/* Promo Code Input */}
+                      <div className="space-y-2 pt-2 border-t border-border">
+                        <p className="text-sm font-medium flex items-center gap-2">
+                          <Tag className="w-4 h-4" />
+                          Promo Code
+                        </p>
+                        {appliedPromo ? (
+                          <div className="flex items-center justify-between p-2 bg-green-500/10 border border-green-500/30 rounded-lg">
+                            <span className="text-sm text-green-400 font-medium">{appliedPromo.code}</span>
+                            <Button variant="ghost" size="sm" onClick={removePromoCode}>
+                              <X className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        ) : (
+                          <div className="flex gap-2">
+                            <Input
+                              placeholder="Enter code"
+                              value={promoCode}
+                              onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                              className="flex-1"
+                            />
+                            <Button 
+                              variant="outline" 
+                              onClick={applyPromoCode}
+                              disabled={isApplyingPromo || !promoCode.trim()}
+                            >
+                              {isApplyingPromo ? <Loader2 className="w-4 h-4 animate-spin" /> : "Apply"}
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Price Breakdown */}
+                      <div className="space-y-2 text-sm pt-2 border-t border-border">
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Subtotal</span>
+                          <span>৳{discounts.subtotal}</span>
+                        </div>
+                        {discounts.loyaltyDiscount > 0 && (
+                          <div className="flex justify-between text-green-400">
+                            <span>Loyalty ({discounts.freeTicketsApplied} free tickets)</span>
+                            <span>-৳{discounts.loyaltyDiscount}</span>
+                          </div>
+                        )}
+                        {discounts.promoDiscount > 0 && (
+                          <div className="flex justify-between text-green-400">
+                            <span>Promo ({appliedPromo?.code})</span>
+                            <span>-৳{discounts.promoDiscount}</span>
+                          </div>
+                        )}
+                      </div>
+
                       <div className="border-t border-border pt-4 flex justify-between">
                         <span className="font-semibold">Total</span>
                         <span className="text-xl font-bold text-primary">
-                          ৳{selectedSection.price * ticketCount}
+                          ৳{discounts.finalAmount}
                         </span>
                       </div>
                       <Button 

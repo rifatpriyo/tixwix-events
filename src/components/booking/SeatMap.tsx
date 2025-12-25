@@ -2,9 +2,11 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Monitor } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Loader2, Monitor, Tag, Gift, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useBookingDiscounts } from "@/hooks/useBookingDiscounts";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 
@@ -43,6 +45,33 @@ export const SeatMap = ({ showtime, movie, onBack }: SeatMapProps) => {
   const [selectedSeats, setSelectedSeats] = useState<Seat[]>([]);
   const [loading, setLoading] = useState(true);
   const [isBooking, setIsBooking] = useState(false);
+
+  const getSeatPrice = (seat: Seat) => {
+    return Math.round(showtime.price * seat.price_multiplier);
+  };
+
+  const getTotalPrice = () => {
+    return selectedSeats.reduce((total, seat) => total + getSeatPrice(seat), 0);
+  };
+
+  // Use discounts hook
+  const {
+    promoCode,
+    setPromoCode,
+    appliedPromo,
+    applyPromoCode,
+    removePromoCode,
+    isApplyingPromo,
+    loyaltyInfo,
+    calculateFinalAmount,
+  } = useBookingDiscounts({
+    userId: user?.id,
+    ticketCount: selectedSeats.length,
+    totalAmount: getTotalPrice(),
+    bookingType: "movie",
+  });
+
+  const discounts = calculateFinalAmount();
 
   useEffect(() => {
     const fetchSeatsAndBookings = async () => {
@@ -113,14 +142,6 @@ export const SeatMap = ({ showtime, movie, onBack }: SeatMapProps) => {
     }
   };
 
-  const getSeatPrice = (seat: Seat) => {
-    return Math.round(showtime.price * seat.price_multiplier);
-  };
-
-  const getTotalPrice = () => {
-    return selectedSeats.reduce((total, seat) => total + getSeatPrice(seat), 0);
-  };
-
   const getSeatTypeColor = (type: string) => {
     switch (type) {
       case "vip":
@@ -147,7 +168,7 @@ export const SeatMap = ({ showtime, movie, onBack }: SeatMapProps) => {
     setIsBooking(true);
 
     try {
-      const totalAmount = getTotalPrice();
+      const { subtotal, promoDiscount, loyaltyDiscount, finalAmount } = discounts;
 
       // Create booking
       const { data: booking, error: bookingError } = await supabase
@@ -156,8 +177,10 @@ export const SeatMap = ({ showtime, movie, onBack }: SeatMapProps) => {
           user_id: user.id,
           showtime_id: showtime.id,
           booking_type: "movie",
-          total_amount: totalAmount,
-          final_amount: totalAmount,
+          total_amount: subtotal,
+          discount_amount: promoDiscount + loyaltyDiscount,
+          final_amount: finalAmount,
+          promo_code: appliedPromo?.code || null,
           status: "confirmed",
           payment_status: "paid",
           payment_method: "demo",
@@ -186,6 +209,14 @@ export const SeatMap = ({ showtime, movie, onBack }: SeatMapProps) => {
         .from("showtimes")
         .update({ available_seats: showtime.halls.capacity - bookedSeatIds.size - selectedSeats.length })
         .eq("id", showtime.id);
+
+      // Update promo code usage count if used
+      if (appliedPromo) {
+        await supabase
+          .from("promo_codes")
+          .update({ used_count: (appliedPromo as any).used_count + 1 })
+          .eq("id", appliedPromo.id);
+      }
 
       toast.success(`Successfully booked ${selectedSeats.length} seat(s) for ${movie.title}!`);
       navigate(`/booking/${booking.id}`);
@@ -294,6 +325,24 @@ export const SeatMap = ({ showtime, movie, onBack }: SeatMapProps) => {
               <p className="text-sm text-muted-foreground">{showtime.halls?.name}</p>
             </div>
 
+            {/* Loyalty Status */}
+            {user && (
+              <div className="p-3 rounded-lg bg-primary/10 border border-primary/20">
+                <div className="flex items-center gap-2 text-sm">
+                  <Gift className="w-4 h-4 text-primary" />
+                  <span>
+                    {loyaltyInfo.isEligibleForFreeTickets ? (
+                      <span className="text-primary font-semibold">🎉 You get 2 FREE tickets on this booking!</span>
+                    ) : (
+                      <span className="text-muted-foreground">
+                        {4 - loyaltyInfo.completedBookings} more booking{4 - loyaltyInfo.completedBookings !== 1 ? "s" : ""} until 2 free tickets
+                      </span>
+                    )}
+                  </span>
+                </div>
+              </div>
+            )}
+
             {selectedSeats.length > 0 ? (
               <>
                 <div className="space-y-2">
@@ -320,9 +369,61 @@ export const SeatMap = ({ showtime, movie, onBack }: SeatMapProps) => {
                   ))}
                 </div>
 
+                {/* Promo Code Input */}
+                <div className="space-y-2 pt-2 border-t border-border">
+                  <p className="text-sm font-medium flex items-center gap-2">
+                    <Tag className="w-4 h-4" />
+                    Promo Code
+                  </p>
+                  {appliedPromo ? (
+                    <div className="flex items-center justify-between p-2 bg-green-500/10 border border-green-500/30 rounded-lg">
+                      <span className="text-sm text-green-400 font-medium">{appliedPromo.code}</span>
+                      <Button variant="ghost" size="sm" onClick={removePromoCode}>
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="Enter code"
+                        value={promoCode}
+                        onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                        className="flex-1"
+                      />
+                      <Button 
+                        variant="outline" 
+                        onClick={applyPromoCode}
+                        disabled={isApplyingPromo || !promoCode.trim()}
+                      >
+                        {isApplyingPromo ? <Loader2 className="w-4 h-4 animate-spin" /> : "Apply"}
+                      </Button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Price Breakdown */}
+                <div className="space-y-2 text-sm pt-2 border-t border-border">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Subtotal</span>
+                    <span>৳{discounts.subtotal}</span>
+                  </div>
+                  {discounts.loyaltyDiscount > 0 && (
+                    <div className="flex justify-between text-green-400">
+                      <span>Loyalty ({discounts.freeTicketsApplied} free tickets)</span>
+                      <span>-৳{discounts.loyaltyDiscount}</span>
+                    </div>
+                  )}
+                  {discounts.promoDiscount > 0 && (
+                    <div className="flex justify-between text-green-400">
+                      <span>Promo ({appliedPromo?.code})</span>
+                      <span>-৳{discounts.promoDiscount}</span>
+                    </div>
+                  )}
+                </div>
+
                 <div className="border-t border-border pt-4 flex justify-between">
                   <span className="font-semibold">Total</span>
-                  <span className="text-xl font-bold text-primary">৳{getTotalPrice()}</span>
+                  <span className="text-xl font-bold text-primary">৳{discounts.finalAmount}</span>
                 </div>
 
                 <Button 
