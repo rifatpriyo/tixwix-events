@@ -188,7 +188,7 @@ export const SeatMap = ({ showtime, movie, onBack }: SeatMapProps) => {
         .eq("id", showtime.id);
 
       toast.success(`Successfully booked ${selectedSeats.length} seat(s) for ${movie.title}!`);
-      navigate("/profile");
+      navigate(`/booking/${booking.id}`);
     } catch (error: any) {
       console.error("Booking error:", error);
       toast.error("Failed to book seats. Please try again.");
