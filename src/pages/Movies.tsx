@@ -58,9 +58,9 @@ const Movies = () => {
     id: movie.id,
     title: movie.title,
     poster: movie.poster_url || "/placeholder.svg",
-    genre: movie.genre.join(", "),
+    genre: movie.genre,
     rating: movie.rating || 0,
-    duration: movie.duration,
+    duration: `${movie.duration} min`,
     releaseDate: movie.release_date,
     status: movie.status as "now_showing" | "coming_soon",
   }));
