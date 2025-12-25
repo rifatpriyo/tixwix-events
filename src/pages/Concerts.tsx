@@ -57,8 +57,8 @@ const Concerts = () => {
     poster: concert.poster_url || "/placeholder.svg",
     date: concert.date,
     venue: concert.venue_name,
-    priceRange: `৳${concert.price_min} - ৳${concert.price_max}`,
-    status: concert.status as "upcoming" | "on_sale" | "sold_out",
+    priceRange: { min: concert.price_min, max: concert.price_max },
+    status: (concert.status === "upcoming" ? "upcoming" : concert.status === "sold_out" ? "sold_out" : "few_left") as "upcoming" | "sold_out" | "few_left",
   }));
 
   return (
