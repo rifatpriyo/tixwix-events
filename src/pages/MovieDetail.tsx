@@ -231,12 +231,6 @@ const MovieDetail = () => {
                 </p>
               )}
 
-              {movie.trailer_url && (
-                <Button size="lg" variant="outline" className="gap-2">
-                  <Play className="w-5 h-5" />
-                  Watch Trailer
-                </Button>
-              )}
             </div>
           </div>
 
