@@ -41,6 +41,8 @@ const Login = () => {
   const [signupEmail, setSignupEmail] = useState("");
   const [signupPassword, setSignupPassword] = useState("");
   const [signupConfirmPassword, setSignupConfirmPassword] = useState("");
+  const [adminEmail, setAdminEmail] = useState("");
+  const [adminPassword, setAdminPassword] = useState("");
 
   useEffect(() => {
     const redirectUser = async () => {
@@ -135,6 +137,43 @@ const Login = () => {
     }
   };
 
+  const handleAdminLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    try {
+      emailSchema.parse(adminEmail);
+      passwordSchema.parse(adminPassword);
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        toast.error(err.errors[0].message);
+        return;
+      }
+    }
+
+    setIsLoading(true);
+    const { error } = await signIn(adminEmail, adminPassword);
+    setIsLoading(false);
+
+    if (error) {
+      toast.error("Invalid admin credentials");
+      return;
+    }
+
+    // Check if this user is actually an admin
+    const { data: { user: loggedInUser } } = await supabase.auth.getUser();
+    if (loggedInUser) {
+      const isAdmin = await checkIsAdmin(loggedInUser.id);
+      if (isAdmin) {
+        toast.success("Welcome Admin!");
+        navigate("/admin");
+      } else {
+        // Sign out if not an admin
+        await supabase.auth.signOut();
+        toast.error("This account does not have admin privileges");
+      }
+    }
+  };
+
   if (authLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -162,9 +201,13 @@ const Login = () => {
         <Card className="glass-card border-border/50">
           <Tabs defaultValue="login" className="w-full">
             <CardHeader>
-              <TabsList className="grid w-full grid-cols-2 bg-secondary">
+              <TabsList className="grid w-full grid-cols-3 bg-secondary">
                 <TabsTrigger value="login">Login</TabsTrigger>
                 <TabsTrigger value="signup">Sign Up</TabsTrigger>
+                <TabsTrigger value="admin" className="flex items-center gap-1">
+                  <Shield className="w-3 h-3" />
+                  Admin
+                </TabsTrigger>
               </TabsList>
             </CardHeader>
             
@@ -306,6 +349,68 @@ const Login = () => {
                       </>
                     ) : (
                       "Create Account"
+                    )}
+                  </Button>
+                </CardFooter>
+              </form>
+            </TabsContent>
+            
+            <TabsContent value="admin">
+              <form onSubmit={handleAdminLogin}>
+                <CardContent className="space-y-4">
+                  <CardTitle className="text-2xl font-display flex items-center gap-2">
+                    <Shield className="w-6 h-6 text-primary" />
+                    Admin Login
+                  </CardTitle>
+                  <CardDescription>
+                    Sign in with your administrator credentials
+                  </CardDescription>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="admin-email">Admin Email</Label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <Input
+                        id="admin-email"
+                        type="email"
+                        placeholder="admin@tixwix.com"
+                        className="pl-10"
+                        value={adminEmail}
+                        onChange={(e) => setAdminEmail(e.target.value)}
+                        required
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="admin-password">Password</Label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <Input
+                        id="admin-password"
+                        type="password"
+                        placeholder="••••••••"
+                        className="pl-10"
+                        value={adminPassword}
+                        onChange={(e) => setAdminPassword(e.target.value)}
+                        required
+                      />
+                    </div>
+                  </div>
+                </CardContent>
+                
+                <CardFooter>
+                  <Button type="submit" className="w-full" disabled={isLoading}>
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Signing In...
+                      </>
+                    ) : (
+                      <>
+                        <Shield className="w-4 h-4 mr-2" />
+                        Sign In as Admin
+                      </>
                     )}
                   </Button>
                 </CardFooter>
