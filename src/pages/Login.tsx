@@ -17,12 +17,14 @@ const passwordSchema = z.string().min(6, "Password must be at least 6 characters
 // Check if user is admin
 const checkIsAdmin = async (userId: string): Promise<boolean> => {
   try {
-    const { data, error } = await supabase.rpc('has_role', {
-      _user_id: userId,
-      _role: 'admin'
-    });
+    const { data, error } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', userId)
+      .eq('role', 'admin')
+      .maybeSingle();
     if (error) return false;
-    return data === true;
+    return data !== null;
   } catch {
     return false;
   }
