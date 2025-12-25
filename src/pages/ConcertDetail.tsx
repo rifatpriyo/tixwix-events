@@ -146,7 +146,7 @@ const ConcertDetail = () => {
         .eq("id", selectedSection.id);
 
       toast.success("Tickets booked successfully!");
-      navigate("/profile");
+      navigate(`/booking/${booking.id}`);
     } catch (error: any) {
       console.error("Booking error:", error);
       toast.error("Failed to book tickets. Please try again.");
