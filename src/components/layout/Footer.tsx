@@ -1,9 +1,7 @@
 import { Link } from "react-router-dom";
 import { Film, Facebook, Twitter, Instagram, Youtube, Mail, Phone, MapPin } from "lucide-react";
-
 export const Footer = () => {
-  return (
-    <footer className="bg-card border-t border-border mt-auto">
+  return <footer className="bg-card border-t border-border mt-auto">
       <div className="container mx-auto px-4 py-12">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Brand */}
@@ -111,10 +109,9 @@ export const Footer = () => {
 
         <div className="border-t border-border mt-8 pt-8 text-center">
           <p className="text-muted-foreground text-sm">
-            © 2026 TixWix. All rights reserved. Made with ❤️ in Bangladesh.
+            © 2026 TixWix. All rights reserved. Made by Priyo , Likhon , Mercy          
           </p>
         </div>
       </div>
-    </footer>
-  );
+    </footer>;
 };
