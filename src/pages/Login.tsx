@@ -159,7 +159,11 @@ const Login = () => {
     setIsForgotLoading(false);
 
     if (error) {
-      toast.error(error.message);
+      if (error.message.toLowerCase().includes("rate limit")) {
+        toast.error("Too many reset attempts. Please wait a few minutes before trying again.");
+      } else {
+        toast.error(error.message);
+      }
     } else {
       toast.success("Password reset link sent! Check your email inbox.");
       setShowForgotPassword(false);
