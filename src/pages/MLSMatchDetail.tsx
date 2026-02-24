@@ -49,10 +49,13 @@ interface StadiumSection {
 }
 
 const tierColors: Record<string, string> = {
-  vip: "bg-purple-500/20 text-purple-300 border-purple-500/30",
-  premium: "bg-amber-500/20 text-amber-300 border-amber-500/30",
-  standard: "bg-blue-500/20 text-blue-300 border-blue-500/30",
-  economy: "bg-slate-500/20 text-slate-300 border-slate-500/30",
+  vip_longside: "bg-red-500/20 text-red-300 border-red-500/30",
+  vip_shortside: "bg-emerald-500/20 text-emerald-300 border-emerald-500/30",
+  longside_premium: "bg-sky-500/20 text-sky-300 border-sky-500/30",
+  longside_standard: "bg-orange-500/20 text-orange-300 border-orange-500/30",
+  shortside_standard: "bg-blue-500/20 text-blue-300 border-blue-500/30",
+  longside_high: "bg-yellow-500/20 text-yellow-300 border-yellow-500/30",
+  shortside_high: "bg-pink-500/20 text-pink-300 border-pink-500/30",
 };
 
 const MLSMatchDetail = () => {
@@ -275,6 +278,24 @@ const MLSMatchDetail = () => {
                 onSelectSection={setSelectedSection}
               />
 
+              {/* Legend */}
+              <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 p-3 rounded-lg bg-card border border-border">
+                {[
+                  { label: "VIP Longside", color: "#ef4444" },
+                  { label: "VIP Shortside", color: "#22c55e" },
+                  { label: "Longside Premium", color: "#38bdf8" },
+                  { label: "Longside Standard", color: "#f97316" },
+                  { label: "Shortside Standard", color: "#3b82f6" },
+                  { label: "Longside High", color: "#eab308" },
+                  { label: "Shortside High", color: "#ec4899" },
+                ].map((item) => (
+                  <div key={item.label} className="flex items-center gap-1.5">
+                    <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: item.color }} />
+                    <span className="text-xs text-muted-foreground">{item.label}</span>
+                  </div>
+                ))}
+              </div>
+
               {/* Section list */}
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                 {sections.map((section) => (
@@ -296,7 +317,7 @@ const MLSMatchDetail = () => {
                         variant="outline"
                         className={`text-[10px] ${tierColors[section.tier] || ""}`}
                       >
-                        {section.tier.toUpperCase()}
+                        {section.tier.replace(/_/g, ' ').toUpperCase()}
                       </Badge>
                     </div>
                     <p className="text-sm font-medium">{section.name}</p>
