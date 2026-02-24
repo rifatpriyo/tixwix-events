@@ -1,6 +1,6 @@
-import { Suspense, useRef, useState } from "react";
+import { Suspense, useRef, useState, useMemo } from "react";
 import { Canvas } from "@react-three/fiber";
-import { OrbitControls, useGLTF, Html, Environment } from "@react-three/drei";
+import { OrbitControls, useGLTF, Html, Environment, Center } from "@react-three/drei";
 import * as THREE from "three";
 import { Loader2 } from "lucide-react";
 
@@ -24,16 +24,36 @@ interface StadiumViewerProps {
   onSelectSection: (section: StadiumSection) => void;
 }
 
+// Map section labels to positions around the stadium rim
+// Stadium is roughly elliptical; positions are in scene units after centering
+const SECTION_POSITIONS: Record<string, [number, number, number]> = {
+  "VIP-N":   [0, 0.6, -2.8],
+  "VIP-S":   [0, 0.6, 2.8],
+  "PREM-W":  [-3.2, 0.6, 0],
+  "PREM-E":  [3.2, 0.6, 0],
+  "UP-N":    [0, 1.0, -3.4],
+  "UP-S":    [0, 1.0, 3.4],
+  "LW-N":    [1.5, 0.3, -2.5],
+  "LW-S":    [1.5, 0.3, 2.5],
+  "LW-W":    [-2.5, 0.3, -1.2],
+  "LW-E":    [2.5, 0.3, 1.2],
+  "GEN-NW":  [-2.2, 0.8, -2.0],
+  "GEN-NE":  [2.2, 0.8, -2.0],
+  "GEN-SW":  [-2.2, 0.8, 2.0],
+  "GEN-SE":  [2.2, 0.8, 2.0],
+};
+
 function StadiumModel() {
   const { scene } = useGLTF("/models/stadium/scene.gltf");
-  return (
-    <primitive
-      object={scene}
-      scale={0.001}
-      position={[0, -2, 0]}
-      rotation={[0, 0, 0]}
-    />
-  );
+
+  // Center the model
+  useMemo(() => {
+    const box = new THREE.Box3().setFromObject(scene);
+    const center = box.getCenter(new THREE.Vector3());
+    scene.position.sub(center);
+  }, [scene]);
+
+  return <primitive object={scene} scale={0.001} />;
 }
 
 function SectionMarker({
@@ -45,28 +65,19 @@ function SectionMarker({
   isSelected: boolean;
   onClick: () => void;
 }) {
-  const meshRef = useRef<THREE.Mesh>(null);
   const [hovered, setHovered] = useState(false);
+  const pos = SECTION_POSITIONS[section.section_label] || [section.position_x, section.position_y, section.position_z];
+
+  const radius = isSelected ? 0.22 : hovered ? 0.2 : 0.15;
 
   return (
-    <group position={[section.position_x, section.position_y, section.position_z]}>
+    <group position={pos}>
       <mesh
-        ref={meshRef}
-        onClick={(e) => {
-          e.stopPropagation();
-          onClick();
-        }}
-        onPointerOver={(e) => {
-          e.stopPropagation();
-          setHovered(true);
-          document.body.style.cursor = "pointer";
-        }}
-        onPointerOut={() => {
-          setHovered(false);
-          document.body.style.cursor = "auto";
-        }}
+        onClick={(e) => { e.stopPropagation(); onClick(); }}
+        onPointerOver={(e) => { e.stopPropagation(); setHovered(true); document.body.style.cursor = "pointer"; }}
+        onPointerOut={() => { setHovered(false); document.body.style.cursor = "auto"; }}
       >
-        <sphereGeometry args={[isSelected ? 0.45 : hovered ? 0.4 : 0.3, 16, 16]} />
+        <sphereGeometry args={[radius, 16, 16]} />
         <meshStandardMaterial
           color={section.color}
           emissive={section.color}
@@ -76,35 +87,12 @@ function SectionMarker({
         />
       </mesh>
 
-      {/* Pulsing ring for selected */}
-      {isSelected && (
-        <mesh rotation={[-Math.PI / 2, 0, 0]}>
-          <ringGeometry args={[0.5, 0.6, 32]} />
-          <meshStandardMaterial
-            color={section.color}
-            emissive={section.color}
-            emissiveIntensity={0.5}
-            transparent
-            opacity={0.6}
-            side={THREE.DoubleSide}
-          />
-        </mesh>
-      )}
-
-      {/* Label on hover or select */}
       {(hovered || isSelected) && (
-        <Html
-          position={[0, 0.7, 0]}
-          center
-          distanceFactor={8}
-          style={{ pointerEvents: "none" }}
-        >
+        <Html position={[0, 0.4, 0]} center distanceFactor={8} style={{ pointerEvents: "none" }}>
           <div className="bg-background/95 backdrop-blur-sm border border-border rounded-lg px-3 py-2 text-center whitespace-nowrap shadow-xl">
             <p className="text-xs font-bold text-foreground">{section.name}</p>
             <p className="text-xs text-primary font-semibold">৳{section.price.toLocaleString()}</p>
-            <p className="text-[10px] text-muted-foreground">
-              {section.available_seats} seats left
-            </p>
+            <p className="text-[10px] text-muted-foreground">{section.available_seats} seats left</p>
           </div>
         </Html>
       )}
@@ -123,25 +111,16 @@ function LoadingFallback() {
   );
 }
 
-export const StadiumViewer = ({
-  sections,
-  selectedSection,
-  onSelectSection,
-}: StadiumViewerProps) => {
+export const StadiumViewer = ({ sections, selectedSection, onSelectSection }: StadiumViewerProps) => {
   return (
     <div className="relative w-full h-[500px] md:h-[600px] rounded-xl overflow-hidden border border-border bg-background/50">
-      {/* Instructions overlay */}
       <div className="absolute top-3 left-3 z-10 bg-background/80 backdrop-blur-sm border border-border rounded-lg px-3 py-2">
         <p className="text-xs text-muted-foreground">
           🖱️ Drag to rotate • Scroll to zoom • Click sections to select
         </p>
       </div>
 
-      <Canvas
-        camera={{ position: [12, 8, 12], fov: 45 }}
-        shadows
-        gl={{ antialias: true }}
-      >
+      <Canvas camera={{ position: [8, 5, 8], fov: 45 }} shadows gl={{ antialias: true }}>
         <ambientLight intensity={0.6} />
         <directionalLight position={[10, 15, 10]} intensity={1} castShadow />
         <directionalLight position={[-10, 10, -10]} intensity={0.3} />
@@ -149,8 +128,6 @@ export const StadiumViewer = ({
 
         <Suspense fallback={<LoadingFallback />}>
           <StadiumModel />
-
-          {/* Section markers */}
           {sections.map((section) => (
             <SectionMarker
               key={section.id}
@@ -162,21 +139,17 @@ export const StadiumViewer = ({
         </Suspense>
 
         <OrbitControls
-          enablePan={true}
-          enableZoom={true}
-          enableRotate={true}
-          minDistance={5}
-          maxDistance={30}
+          enablePan enableZoom enableRotate
+          minDistance={4}
+          maxDistance={20}
           minPolarAngle={0.2}
           maxPolarAngle={Math.PI / 2.1}
           autoRotate={!selectedSection}
           autoRotateSpeed={0.5}
         />
-
         <Environment preset="city" />
       </Canvas>
 
-      {/* Credit */}
       <div className="absolute bottom-2 right-2 z-10">
         <p className="text-[9px] text-muted-foreground/50">
           3D Model: "Camp Nou Stadium" by farhad.Guli (CC-BY-4.0)
@@ -186,5 +159,4 @@ export const StadiumViewer = ({
   );
 };
 
-// Preload the model
 useGLTF.preload("/models/stadium/scene.gltf");
