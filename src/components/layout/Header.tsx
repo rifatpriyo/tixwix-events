@@ -23,6 +23,7 @@ export const Header = () => {
     { path: "/", label: "Home" },
     { path: "/movies", label: "Movies" },
     { path: "/concerts", label: "Concerts" },
+    { path: "/mls", label: "MLS Soccer" },
   ];
 
   const isActive = (path: string) => location.pathname === path;

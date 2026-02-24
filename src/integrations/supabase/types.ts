@@ -277,6 +277,54 @@ export type Database = {
         }
         Relationships: []
       }
+      mls_matches: {
+        Row: {
+          available_tickets: number
+          away_logo_url: string | null
+          away_team: string
+          created_at: string
+          description: string | null
+          home_logo_url: string | null
+          home_team: string
+          id: string
+          match_date: string
+          status: string | null
+          total_tickets: number
+          updated_at: string
+          venue: string
+        }
+        Insert: {
+          available_tickets?: number
+          away_logo_url?: string | null
+          away_team: string
+          created_at?: string
+          description?: string | null
+          home_logo_url?: string | null
+          home_team: string
+          id?: string
+          match_date: string
+          status?: string | null
+          total_tickets?: number
+          updated_at?: string
+          venue?: string
+        }
+        Update: {
+          available_tickets?: number
+          away_logo_url?: string | null
+          away_team?: string
+          created_at?: string
+          description?: string | null
+          home_logo_url?: string | null
+          home_team?: string
+          id?: string
+          match_date?: string
+          status?: string | null
+          total_tickets?: number
+          updated_at?: string
+          venue?: string
+        }
+        Relationships: []
+      }
       movies: {
         Row: {
           age_rating: string | null
@@ -581,6 +629,62 @@ export type Database = {
             columns: ["movie_id"]
             isOneToOne: false
             referencedRelation: "movies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stadium_sections: {
+        Row: {
+          available_seats: number
+          color: string | null
+          created_at: string
+          id: string
+          match_id: string
+          name: string
+          position_x: number | null
+          position_y: number | null
+          position_z: number | null
+          price: number
+          section_label: string
+          tier: string
+          total_seats: number
+        }
+        Insert: {
+          available_seats: number
+          color?: string | null
+          created_at?: string
+          id?: string
+          match_id: string
+          name: string
+          position_x?: number | null
+          position_y?: number | null
+          position_z?: number | null
+          price: number
+          section_label: string
+          tier?: string
+          total_seats: number
+        }
+        Update: {
+          available_seats?: number
+          color?: string | null
+          created_at?: string
+          id?: string
+          match_id?: string
+          name?: string
+          position_x?: number | null
+          position_y?: number | null
+          position_z?: number | null
+          price?: number
+          section_label?: string
+          tier?: string
+          total_seats?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stadium_sections_match_id_fkey"
+            columns: ["match_id"]
+            isOneToOne: false
+            referencedRelation: "mls_matches"
             referencedColumns: ["id"]
           },
         ]
