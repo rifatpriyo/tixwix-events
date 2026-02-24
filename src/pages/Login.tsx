@@ -43,6 +43,9 @@ const Login = () => {
   const [signupConfirmPassword, setSignupConfirmPassword] = useState("");
   const [adminEmail, setAdminEmail] = useState("");
   const [adminPassword, setAdminPassword] = useState("");
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [isForgotLoading, setIsForgotLoading] = useState(false);
 
   useEffect(() => {
     const redirectUser = async () => {
@@ -134,6 +137,33 @@ const Login = () => {
       }
     } else {
       toast.success("Account created! Please check your email to confirm your account.");
+    }
+  };
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    try {
+      emailSchema.parse(forgotEmail);
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        toast.error(err.errors[0].message);
+        return;
+      }
+    }
+
+    setIsForgotLoading(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(forgotEmail, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    setIsForgotLoading(false);
+
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success("Password reset link sent! Check your email inbox.");
+      setShowForgotPassword(false);
+      setForgotEmail("");
     }
   };
 
@@ -250,9 +280,17 @@ const Login = () => {
                       />
                     </div>
                   </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setShowForgotPassword(true)}
+                    className="text-sm text-primary hover:underline"
+                  >
+                    Forgot your password?
+                  </button>
                 </CardContent>
                 
-                <CardFooter>
+                <CardFooter className="flex flex-col gap-3">
                   <Button type="submit" className="w-full" disabled={isLoading}>
                     {isLoading ? (
                       <>
@@ -265,6 +303,50 @@ const Login = () => {
                   </Button>
                 </CardFooter>
               </form>
+
+              {/* Forgot Password Overlay */}
+              {showForgotPassword && (
+                <div className="px-6 pb-6">
+                  <div className="border border-border rounded-lg p-4 space-y-4 bg-secondary/50">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-lg font-display font-semibold">Reset Password</h3>
+                      <button
+                        type="button"
+                        onClick={() => { setShowForgotPassword(false); setForgotEmail(""); }}
+                        className="text-muted-foreground hover:text-foreground text-sm"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      Enter your email and we'll send you a link to reset your password.
+                    </p>
+                    <form onSubmit={handleForgotPassword} className="space-y-3">
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                        <Input
+                          type="email"
+                          placeholder="you@example.com"
+                          className="pl-10"
+                          value={forgotEmail}
+                          onChange={(e) => setForgotEmail(e.target.value)}
+                          required
+                        />
+                      </div>
+                      <Button type="submit" className="w-full" disabled={isForgotLoading}>
+                        {isForgotLoading ? (
+                          <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            Sending...
+                          </>
+                        ) : (
+                          "Send Reset Link"
+                        )}
+                      </Button>
+                    </form>
+                  </div>
+                </div>
+              )}
             </TabsContent>
             
             <TabsContent value="signup">
