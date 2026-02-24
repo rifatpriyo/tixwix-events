@@ -13,6 +13,8 @@ import ConcertDetail from "./pages/ConcertDetail";
 import Profile from "./pages/Profile";
 import BookingConfirmation from "./pages/BookingConfirmation";
 import AdminDashboard from "./pages/AdminDashboard";
+import MLSMatches from "./pages/MLSMatches";
+import MLSMatchDetail from "./pages/MLSMatchDetail";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -34,6 +36,8 @@ const App = () => (
             <Route path="/profile" element={<Profile />} />
             <Route path="/booking/:id" element={<BookingConfirmation />} />
             <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/mls" element={<MLSMatches />} />
+            <Route path="/mls/:id" element={<MLSMatchDetail />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
