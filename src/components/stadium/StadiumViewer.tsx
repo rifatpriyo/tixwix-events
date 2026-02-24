@@ -27,27 +27,27 @@ interface StadiumViewerProps {
 // Map section labels to positions around the stadium rim
 // Stadium is roughly elliptical; positions are in scene units after centering
 const SECTION_POSITIONS: Record<string, [number, number, number]> = {
-  // VIP Longside - pitch level, long sides
-  "VIP-LW":  [-2.8, 0.15, 0],
-  "VIP-LE":  [2.8, 0.15, 0],
-  // VIP Shortside - pitch level, behind goals
-  "VIP-SN":  [0, 0.15, -2.0],
-  "VIP-SS":  [0, 0.15, 2.0],
-  // Longside Premium - 2nd ring
-  "LP-W":    [-3.1, 0.4, 0.6],
-  "LP-E":    [3.1, 0.4, -0.6],
-  // Longside Standard - mid ring
-  "LS-W":    [-3.4, 0.65, -0.8],
-  "LS-E":    [3.4, 0.65, 0.8],
+  // VIP Longside - on the lower bowl seats, long sides
+  "VIP-LW":  [-2.0, -0.3, 0],
+  "VIP-LE":  [2.0, -0.3, 0],
+  // VIP Shortside - on the lower bowl seats, behind goals
+  "VIP-SN":  [0, -0.3, -1.5],
+  "VIP-SS":  [0, -0.3, 1.5],
+  // Longside Premium - 2nd ring seats
+  "LP-W":    [-2.6, -0.1, 0.5],
+  "LP-E":    [2.6, -0.1, -0.5],
+  // Longside Standard - mid ring seats
+  "LS-W":    [-2.9, 0.1, -0.6],
+  "LS-E":    [2.9, 0.1, 0.6],
   // Shortside Standard - mid ring, ends
-  "SS-N":    [-1.0, 0.4, -2.6],
-  "SS-S":    [1.0, 0.4, 2.6],
-  // Longside High - top ring
-  "LH-W":    [-3.7, 1.0, 0.3],
-  "LH-E":    [3.7, 1.0, -0.3],
-  // Shortside High - top ring, ends
-  "SH-N":    [-1.3, 0.85, -3.0],
-  "SH-S":    [1.3, 0.85, 3.0],
+  "SS-N":    [-0.8, -0.1, -2.2],
+  "SS-S":    [0.8, -0.1, 2.2],
+  // Longside High - upper tier seats
+  "LH-W":    [-3.2, 0.35, 0.3],
+  "LH-E":    [3.2, 0.35, -0.3],
+  // Shortside High - upper tier, ends
+  "SH-N":    [-1.1, 0.25, -2.7],
+  "SH-S":    [1.1, 0.25, 2.7],
 };
 
 function StadiumModel() {
@@ -74,8 +74,7 @@ function SectionMarker({
 }) {
   const [hovered, setHovered] = useState(false);
   const pos = SECTION_POSITIONS[section.section_label] || [section.position_x, section.position_y, section.position_z];
-
-  const radius = isSelected ? 0.22 : hovered ? 0.2 : 0.15;
+  const radius = isSelected ? 0.18 : hovered ? 0.16 : 0.12;
 
   return (
     <group position={pos}>
