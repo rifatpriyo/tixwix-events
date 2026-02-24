@@ -13,6 +13,7 @@ import ConcertDetail from "./pages/ConcertDetail";
 import Profile from "./pages/Profile";
 import BookingConfirmation from "./pages/BookingConfirmation";
 import AdminDashboard from "./pages/AdminDashboard";
+import ResetPassword from "./pages/ResetPassword";
 import MLSMatches from "./pages/MLSMatches";
 import MLSMatchDetail from "./pages/MLSMatchDetail";
 import NotFound from "./pages/NotFound";
@@ -29,6 +30,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/movies" element={<Movies />} />
             <Route path="/movies/:id" element={<MovieDetail />} />
             <Route path="/concerts" element={<Concerts />} />
