@@ -27,20 +27,27 @@ interface StadiumViewerProps {
 // Map section labels to positions around the stadium rim
 // Stadium is roughly elliptical; positions are in scene units after centering
 const SECTION_POSITIONS: Record<string, [number, number, number]> = {
-  "VIP-N":   [0, 0.6, -2.8],
-  "VIP-S":   [0, 0.6, 2.8],
-  "PREM-W":  [-3.2, 0.6, 0],
-  "PREM-E":  [3.2, 0.6, 0],
-  "UP-N":    [0, 1.0, -3.4],
-  "UP-S":    [0, 1.0, 3.4],
-  "LW-N":    [1.5, 0.3, -2.5],
-  "LW-S":    [1.5, 0.3, 2.5],
-  "LW-W":    [-2.5, 0.3, -1.2],
-  "LW-E":    [2.5, 0.3, 1.2],
-  "GEN-NW":  [-2.2, 0.8, -2.0],
-  "GEN-NE":  [2.2, 0.8, -2.0],
-  "GEN-SW":  [-2.2, 0.8, 2.0],
-  "GEN-SE":  [2.2, 0.8, 2.0],
+  // VIP Longside - pitch level, long sides
+  "VIP-LW":  [-2.8, 0.15, 0],
+  "VIP-LE":  [2.8, 0.15, 0],
+  // VIP Shortside - pitch level, behind goals
+  "VIP-SN":  [0, 0.15, -2.0],
+  "VIP-SS":  [0, 0.15, 2.0],
+  // Longside Premium - 2nd ring
+  "LP-W":    [-3.1, 0.4, 0.6],
+  "LP-E":    [3.1, 0.4, -0.6],
+  // Longside Standard - mid ring
+  "LS-W":    [-3.4, 0.65, -0.8],
+  "LS-E":    [3.4, 0.65, 0.8],
+  // Shortside Standard - mid ring, ends
+  "SS-N":    [-1.0, 0.4, -2.6],
+  "SS-S":    [1.0, 0.4, 2.6],
+  // Longside High - top ring
+  "LH-W":    [-3.7, 1.0, 0.3],
+  "LH-E":    [3.7, 1.0, -0.3],
+  // Shortside High - top ring, ends
+  "SH-N":    [-1.3, 0.85, -3.0],
+  "SH-S":    [1.3, 0.85, 3.0],
 };
 
 function StadiumModel() {
