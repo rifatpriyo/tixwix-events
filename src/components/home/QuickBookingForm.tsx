@@ -41,17 +41,17 @@ export const QuickBookingForm = () => {
   };
 
   return (
-    <section className="relative -mt-16 z-20 container mx-auto px-4">
-      <div className="glass-card rounded-2xl p-6 md:p-8 cinema-glow">
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+    <section className="relative -mt-12 md:-mt-16 z-20 container mx-auto px-4">
+      <div className="glass-card rounded-2xl p-4 md:p-8 cinema-glow">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4 items-end">
           {/* Location */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              <MapPin className="w-4 h-4 text-primary" />
+          <div className="space-y-1.5 md:space-y-2">
+            <label className="text-xs md:text-sm font-medium text-muted-foreground flex items-center gap-1.5 md:gap-2">
+              <MapPin className="w-3.5 h-3.5 md:w-4 md:h-4 text-primary" />
               Location
             </label>
             <Select defaultValue="dhaka">
-              <SelectTrigger className="bg-secondary border-border">
+              <SelectTrigger className="bg-secondary border-border h-10 md:h-10 text-sm">
                 <SelectValue placeholder="Select location" />
               </SelectTrigger>
               <SelectContent>
@@ -61,13 +61,13 @@ export const QuickBookingForm = () => {
           </div>
 
           {/* Date */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-primary" />
+          <div className="space-y-1.5 md:space-y-2">
+            <label className="text-xs md:text-sm font-medium text-muted-foreground flex items-center gap-1.5 md:gap-2">
+              <Calendar className="w-3.5 h-3.5 md:w-4 md:h-4 text-primary" />
               Date
             </label>
             <Select defaultValue="today">
-              <SelectTrigger className="bg-secondary border-border">
+              <SelectTrigger className="bg-secondary border-border h-10 md:h-10 text-sm">
                 <SelectValue placeholder="Select date" />
               </SelectTrigger>
               <SelectContent>
@@ -81,13 +81,13 @@ export const QuickBookingForm = () => {
           </div>
 
           {/* Movie */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              <Film className="w-4 h-4 text-primary" />
+          <div className="space-y-1.5 md:space-y-2">
+            <label className="text-xs md:text-sm font-medium text-muted-foreground flex items-center gap-1.5 md:gap-2">
+              <Film className="w-3.5 h-3.5 md:w-4 md:h-4 text-primary" />
               Movie
             </label>
             <Select value={selectedMovie} onValueChange={setSelectedMovie}>
-              <SelectTrigger className="bg-secondary border-border">
+              <SelectTrigger className="bg-secondary border-border h-10 md:h-10 text-sm">
                 <SelectValue placeholder="All Movies" />
               </SelectTrigger>
               <SelectContent>
@@ -102,13 +102,13 @@ export const QuickBookingForm = () => {
           </div>
 
           {/* People */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              <Users className="w-4 h-4 text-primary" />
+          <div className="space-y-1.5 md:space-y-2">
+            <label className="text-xs md:text-sm font-medium text-muted-foreground flex items-center gap-1.5 md:gap-2">
+              <Users className="w-3.5 h-3.5 md:w-4 md:h-4 text-primary" />
               People
             </label>
             <Select defaultValue="2">
-              <SelectTrigger className="bg-secondary border-border">
+              <SelectTrigger className="bg-secondary border-border h-10 md:h-10 text-sm">
                 <SelectValue placeholder="Number of people" />
               </SelectTrigger>
               <SelectContent>
@@ -122,7 +122,7 @@ export const QuickBookingForm = () => {
           </div>
 
           {/* Book Now Button */}
-          <Button onClick={handleBookNow} size="lg" className="w-full gap-2">
+          <Button onClick={handleBookNow} size="lg" className="w-full gap-2 h-10 md:h-10 col-span-2 md:col-span-1 text-base md:text-sm">
             <Search className="w-4 h-4" />
             Book Now
           </Button>
