@@ -1,7 +1,8 @@
 {
-  "name": "vite_react_shadcn_ts",
+  "name": "tixwix",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
+  "description": "A full-stack event ticketing platform for movies, concerts, and MLS soccer matches with real-time seat selection and 3D stadium visualization.",
   "type": "module",
   "scripts": {
     "dev": "vite",
