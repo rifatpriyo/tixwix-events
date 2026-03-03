@@ -54,7 +54,6 @@ export const SeatMap = ({ showtime, movie, onBack }: SeatMapProps) => {
     return selectedSeats.reduce((total, seat) => total + getSeatPrice(seat), 0);
   };
 
-  // Use discounts hook
   const {
     promoCode,
     setPromoCode,
@@ -75,7 +74,6 @@ export const SeatMap = ({ showtime, movie, onBack }: SeatMapProps) => {
 
   useEffect(() => {
     const fetchSeatsAndBookings = async () => {
-      // Fetch seats for the hall
       const { data: seatsData, error: seatsError } = await supabase
         .from("seats")
         .select("*")
@@ -91,7 +89,6 @@ export const SeatMap = ({ showtime, movie, onBack }: SeatMapProps) => {
 
       setSeats(seatsData || []);
 
-      // Fetch booked seats for this showtime
       const { data: bookingsData, error: bookingsError } = await supabase
         .from("bookings")
         .select(`
@@ -119,7 +116,6 @@ export const SeatMap = ({ showtime, movie, onBack }: SeatMapProps) => {
     fetchSeatsAndBookings();
   }, [showtime.hall_id, showtime.id]);
 
-  // Group seats by row
   const seatsByRow = seats.reduce((acc, seat) => {
     if (!acc[seat.row_label]) acc[seat.row_label] = [];
     acc[seat.row_label].push(seat);
@@ -170,7 +166,6 @@ export const SeatMap = ({ showtime, movie, onBack }: SeatMapProps) => {
     try {
       const { subtotal, promoDiscount, loyaltyDiscount, finalAmount } = discounts;
 
-      // Create booking
       const { data: booking, error: bookingError } = await supabase
         .from("bookings")
         .insert({
@@ -190,7 +185,6 @@ export const SeatMap = ({ showtime, movie, onBack }: SeatMapProps) => {
 
       if (bookingError) throw bookingError;
 
-      // Create booking items
       const bookingItems = selectedSeats.map((seat) => ({
         booking_id: booking.id,
         seat_id: seat.id,
@@ -204,13 +198,11 @@ export const SeatMap = ({ showtime, movie, onBack }: SeatMapProps) => {
 
       if (itemsError) throw itemsError;
 
-      // Update available seats in showtime
       await supabase
         .from("showtimes")
         .update({ available_seats: showtime.halls.capacity - bookedSeatIds.size - selectedSeats.length })
         .eq("id", showtime.id);
 
-      // Update promo code usage count if used
       if (appliedPromo) {
         await supabase
           .from("promo_codes")
@@ -237,76 +229,78 @@ export const SeatMap = ({ showtime, movie, onBack }: SeatMapProps) => {
   }
 
   return (
-    <div className="grid lg:grid-cols-3 gap-8">
+    <div className="grid lg:grid-cols-3 gap-6 md:gap-8">
       {/* Seat Map */}
       <div className="lg:col-span-2">
         <Card className="glass-card overflow-hidden">
-          <CardContent className="p-6">
+          <CardContent className="p-3 md:p-6">
             {/* Screen */}
-            <div className="relative mb-8">
-              <div className="w-full h-2 bg-gradient-to-r from-transparent via-primary to-transparent rounded-full mb-2" />
-              <div className="flex items-center justify-center gap-2 text-muted-foreground text-sm">
-                <Monitor className="w-4 h-4" />
+            <div className="relative mb-6 md:mb-8">
+              <div className="w-full h-1.5 md:h-2 bg-gradient-to-r from-transparent via-primary to-transparent rounded-full mb-2" />
+              <div className="flex items-center justify-center gap-2 text-muted-foreground text-xs md:text-sm">
+                <Monitor className="w-3.5 h-3.5 md:w-4 md:h-4" />
                 <span>SCREEN</span>
               </div>
             </div>
 
-            {/* Seats */}
-            <div className="flex flex-col items-center gap-2 overflow-x-auto pb-4">
-              {rows.map((row) => (
-                <div key={row} className="flex items-center gap-1">
-                  <span className="w-6 text-center text-sm font-medium text-muted-foreground">
-                    {row}
-                  </span>
-                  <div className="flex gap-1">
-                    {seatsByRow[row].map((seat) => {
-                      const isBooked = bookedSeatIds.has(seat.id);
-                      const isSelected = selectedSeats.find((s) => s.id === seat.id);
-                      
-                      return (
-                        <button
-                          key={seat.id}
-                          onClick={() => toggleSeat(seat)}
-                          disabled={isBooked}
-                          className={`
-                            w-7 h-7 rounded-t-lg text-xs font-medium transition-all
-                            ${isBooked ? "seat-sold" : isSelected ? "seat-selected" : `seat-available ${getSeatTypeColor(seat.seat_type)} hover:opacity-80`}
-                          `}
-                          title={`${seat.row_label}${seat.seat_number} - ${seat.seat_type} - ৳${getSeatPrice(seat)}`}
-                        >
-                          {seat.seat_number}
-                        </button>
-                      );
-                    })}
+            {/* Seats - pinch-zoomable container on mobile */}
+            <div className="overflow-x-auto pb-4 -mx-3 px-3 md:mx-0 md:px-0">
+              <div className="flex flex-col items-center gap-1 md:gap-2 min-w-fit">
+                {rows.map((row) => (
+                  <div key={row} className="flex items-center gap-0.5 md:gap-1">
+                    <span className="w-5 md:w-6 text-center text-[10px] md:text-sm font-medium text-muted-foreground">
+                      {row}
+                    </span>
+                    <div className="flex gap-0.5 md:gap-1">
+                      {seatsByRow[row].map((seat) => {
+                        const isBooked = bookedSeatIds.has(seat.id);
+                        const isSelected = selectedSeats.find((s) => s.id === seat.id);
+                        
+                        return (
+                          <button
+                            key={seat.id}
+                            onClick={() => toggleSeat(seat)}
+                            disabled={isBooked}
+                            className={`
+                              w-6 h-6 md:w-7 md:h-7 rounded-t-md md:rounded-t-lg text-[9px] md:text-xs font-medium transition-all active:scale-90
+                              ${isBooked ? "seat-sold" : isSelected ? "seat-selected" : `seat-available ${getSeatTypeColor(seat.seat_type)} hover:opacity-80`}
+                            `}
+                            title={`${seat.row_label}${seat.seat_number} - ${seat.seat_type} - ৳${getSeatPrice(seat)}`}
+                          >
+                            {seat.seat_number}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <span className="w-5 md:w-6 text-center text-[10px] md:text-sm font-medium text-muted-foreground">
+                      {row}
+                    </span>
                   </div>
-                  <span className="w-6 text-center text-sm font-medium text-muted-foreground">
-                    {row}
-                  </span>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
 
             {/* Legend */}
-            <div className="flex flex-wrap justify-center gap-4 mt-6 pt-6 border-t border-border">
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-t-lg bg-secondary" />
-                <span className="text-sm text-muted-foreground">Standard</span>
+            <div className="flex flex-wrap justify-center gap-3 md:gap-4 mt-4 md:mt-6 pt-4 md:pt-6 border-t border-border">
+              <div className="flex items-center gap-1.5">
+                <div className="w-5 h-5 md:w-6 md:h-6 rounded-t-md md:rounded-t-lg bg-secondary" />
+                <span className="text-[10px] md:text-sm text-muted-foreground">Standard</span>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-t-lg bg-amber-600" />
-                <span className="text-sm text-muted-foreground">Premium</span>
+              <div className="flex items-center gap-1.5">
+                <div className="w-5 h-5 md:w-6 md:h-6 rounded-t-md md:rounded-t-lg bg-amber-600" />
+                <span className="text-[10px] md:text-sm text-muted-foreground">Premium</span>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-t-lg bg-purple-600" />
-                <span className="text-sm text-muted-foreground">VIP</span>
+              <div className="flex items-center gap-1.5">
+                <div className="w-5 h-5 md:w-6 md:h-6 rounded-t-md md:rounded-t-lg bg-purple-600" />
+                <span className="text-[10px] md:text-sm text-muted-foreground">VIP</span>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-t-lg bg-primary" />
-                <span className="text-sm text-muted-foreground">Selected</span>
+              <div className="flex items-center gap-1.5">
+                <div className="w-5 h-5 md:w-6 md:h-6 rounded-t-md md:rounded-t-lg bg-primary" />
+                <span className="text-[10px] md:text-sm text-muted-foreground">Selected</span>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-t-lg bg-muted opacity-50" />
-                <span className="text-sm text-muted-foreground">Booked</span>
+              <div className="flex items-center gap-1.5">
+                <div className="w-5 h-5 md:w-6 md:h-6 rounded-t-md md:rounded-t-lg bg-muted opacity-50" />
+                <span className="text-[10px] md:text-sm text-muted-foreground">Booked</span>
               </div>
             </div>
           </CardContent>
@@ -315,24 +309,24 @@ export const SeatMap = ({ showtime, movie, onBack }: SeatMapProps) => {
 
       {/* Booking Summary */}
       <div>
-        <Card className="glass-card sticky top-24">
-          <CardHeader>
-            <CardTitle>Booking Summary</CardTitle>
+        <Card className="glass-card lg:sticky lg:top-24">
+          <CardHeader className="pb-3 md:pb-6">
+            <CardTitle className="text-lg md:text-xl">Booking Summary</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-3 md:space-y-4">
             <div>
-              <p className="font-semibold">{movie.title}</p>
-              <p className="text-sm text-muted-foreground">{showtime.halls?.name}</p>
+              <p className="font-semibold text-sm md:text-base">{movie.title}</p>
+              <p className="text-xs md:text-sm text-muted-foreground">{showtime.halls?.name}</p>
             </div>
 
             {/* Loyalty Status */}
             {user && (
-              <div className="p-3 rounded-lg bg-primary/10 border border-primary/20">
-                <div className="flex items-center gap-2 text-sm">
-                  <Gift className="w-4 h-4 text-primary" />
+              <div className="p-2.5 md:p-3 rounded-lg bg-primary/10 border border-primary/20">
+                <div className="flex items-center gap-2 text-xs md:text-sm">
+                  <Gift className="w-4 h-4 text-primary shrink-0" />
                   <span>
                     {loyaltyInfo.isEligibleForFreeTickets ? (
-                      <span className="text-primary font-semibold">🎉 You get 2 FREE tickets on this booking!</span>
+                      <span className="text-primary font-semibold">🎉 You get 2 FREE tickets!</span>
                     ) : (
                       <span className="text-muted-foreground">
                         {4 - loyaltyInfo.completedBookings} more booking{4 - loyaltyInfo.completedBookings !== 1 ? "s" : ""} until 2 free tickets
@@ -346,19 +340,19 @@ export const SeatMap = ({ showtime, movie, onBack }: SeatMapProps) => {
             {selectedSeats.length > 0 ? (
               <>
                 <div className="space-y-2">
-                  <p className="text-sm text-muted-foreground">Selected Seats:</p>
+                  <p className="text-xs md:text-sm text-muted-foreground">Selected Seats:</p>
                   <div className="flex flex-wrap gap-1">
                     {selectedSeats
                       .sort((a, b) => a.row_label.localeCompare(b.row_label) || a.seat_number - b.seat_number)
                       .map((seat) => (
-                        <Badge key={seat.id} variant="secondary">
+                        <Badge key={seat.id} variant="secondary" className="text-xs">
                           {seat.row_label}{seat.seat_number}
                         </Badge>
                       ))}
                   </div>
                 </div>
 
-                <div className="space-y-2 text-sm">
+                <div className="space-y-1.5 md:space-y-2 text-xs md:text-sm">
                   {selectedSeats.map((seat) => (
                     <div key={seat.id} className="flex justify-between">
                       <span className="text-muted-foreground">
@@ -371,14 +365,14 @@ export const SeatMap = ({ showtime, movie, onBack }: SeatMapProps) => {
 
                 {/* Promo Code Input */}
                 <div className="space-y-2 pt-2 border-t border-border">
-                  <p className="text-sm font-medium flex items-center gap-2">
-                    <Tag className="w-4 h-4" />
+                  <p className="text-xs md:text-sm font-medium flex items-center gap-2">
+                    <Tag className="w-3.5 h-3.5 md:w-4 md:h-4" />
                     Promo Code
                   </p>
                   {appliedPromo ? (
                     <div className="flex items-center justify-between p-2 bg-green-500/10 border border-green-500/30 rounded-lg">
-                      <span className="text-sm text-green-400 font-medium">{appliedPromo.code}</span>
-                      <Button variant="ghost" size="sm" onClick={removePromoCode}>
+                      <span className="text-xs md:text-sm text-green-400 font-medium">{appliedPromo.code}</span>
+                      <Button variant="ghost" size="sm" onClick={removePromoCode} className="h-7 w-7 p-0">
                         <X className="w-4 h-4" />
                       </Button>
                     </div>
@@ -388,12 +382,13 @@ export const SeatMap = ({ showtime, movie, onBack }: SeatMapProps) => {
                         placeholder="Enter code"
                         value={promoCode}
                         onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
-                        className="flex-1"
+                        className="flex-1 h-9 text-sm"
                       />
                       <Button 
                         variant="outline" 
                         onClick={applyPromoCode}
                         disabled={isApplyingPromo || !promoCode.trim()}
+                        className="h-9 text-sm"
                       >
                         {isApplyingPromo ? <Loader2 className="w-4 h-4 animate-spin" /> : "Apply"}
                       </Button>
@@ -402,14 +397,14 @@ export const SeatMap = ({ showtime, movie, onBack }: SeatMapProps) => {
                 </div>
 
                 {/* Price Breakdown */}
-                <div className="space-y-2 text-sm pt-2 border-t border-border">
+                <div className="space-y-1.5 md:space-y-2 text-xs md:text-sm pt-2 border-t border-border">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Subtotal</span>
                     <span>৳{discounts.subtotal}</span>
                   </div>
                   {discounts.loyaltyDiscount > 0 && (
                     <div className="flex justify-between text-green-400">
-                      <span>Loyalty ({discounts.freeTicketsApplied} free tickets)</span>
+                      <span>Loyalty ({discounts.freeTicketsApplied} free)</span>
                       <span>-৳{discounts.loyaltyDiscount}</span>
                     </div>
                   )}
@@ -421,14 +416,13 @@ export const SeatMap = ({ showtime, movie, onBack }: SeatMapProps) => {
                   )}
                 </div>
 
-                <div className="border-t border-border pt-4 flex justify-between">
-                  <span className="font-semibold">Total</span>
-                  <span className="text-xl font-bold text-primary">৳{discounts.finalAmount}</span>
+                <div className="border-t border-border pt-3 md:pt-4 flex justify-between">
+                  <span className="font-semibold text-sm md:text-base">Total</span>
+                  <span className="text-lg md:text-xl font-bold text-primary">৳{discounts.finalAmount}</span>
                 </div>
 
                 <Button 
-                  className="w-full" 
-                  size="lg" 
+                  className="w-full h-11 md:h-12 text-base" 
                   onClick={handleBookSeats}
                   disabled={isBooking}
                 >
@@ -443,12 +437,12 @@ export const SeatMap = ({ showtime, movie, onBack }: SeatMapProps) => {
                 </Button>
               </>
             ) : (
-              <p className="text-muted-foreground text-center py-8">
+              <p className="text-muted-foreground text-center py-6 md:py-8 text-sm">
                 Select seats to continue
               </p>
             )}
 
-            <Button variant="outline" className="w-full" onClick={onBack}>
+            <Button variant="outline" className="w-full h-10" onClick={onBack}>
               Change Showtime
             </Button>
           </CardContent>
