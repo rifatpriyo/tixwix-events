@@ -7,7 +7,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Film, User, Menu, X, LogOut, Ticket, Home, Music, Trophy } from "lucide-react";
+import { Film, User, Menu, X, LogOut, Ticket, Home, Music, Trophy, Download } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
@@ -39,6 +39,7 @@ export const Header = () => {
     { path: "/movies", label: "Movies", icon: Film },
     { path: "/concerts", label: "Concerts", icon: Music },
     { path: "/mls", label: "MLS Soccer", icon: Trophy },
+    { path: "/install", label: "Get App", icon: Download },
   ];
 
   const isActive = (path: string) => location.pathname === path;
